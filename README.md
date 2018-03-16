@@ -125,6 +125,18 @@ First of all, I defined three double variables to track the distance from the cl
  double left_dist = 100;
  double right_dist = 100;
 ```
+And then, find the minimum value for each lane:
+```cpp
+  if ( car_lane == lane ) {
+   ego_dist = min (ego_dist, dist );
+ } else if ( car_lane - lane == -1 ) {
+   // Car left
+   left_dist = min (left_dist, dist );
+ } else if ( car_lane - lane == 1 ) {
+   // Car right
+   right_dist = min (right_dist, dist );
+ }
+ ```
 
 ### Lane Change Decision
 
