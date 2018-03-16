@@ -328,9 +328,9 @@ int main() {
             double ref_y = car_y;
             double ref_yaw = deg2rad(car_yaw);
 
-            // Do I have have previous points
+            
             if ( prev_size < 2 ) {
-                // There are not too many...
+                
                 double prev_car_x = car_x - cos(car_yaw);
                 double prev_car_y = car_y - sin(car_yaw);
 
@@ -339,6 +339,7 @@ int main() {
 
                 ptsy.push_back(prev_car_y);
                 ptsy.push_back(car_y);
+
             } else {
                 // Use the last two points.
                 ref_x = previous_path_x[prev_size - 1];
@@ -355,7 +356,7 @@ int main() {
                 ptsy.push_back(ref_y);
             }
 
-            // Setting up target points in the future.
+            // Setting up three target point
             vector<double> next_wp0 = getXY(car_s + 30, 2 + 4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
             vector<double> next_wp1 = getXY(car_s + 60, 2 + 4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
             vector<double> next_wp2 = getXY(car_s + 90, 2 + 4*lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
@@ -368,7 +369,7 @@ int main() {
             ptsy.push_back(next_wp1[1]);
             ptsy.push_back(next_wp2[1]);
 
-            // Making coordinates to local car coordinates.
+            // Mtransform into local car coordinates.
             for ( int i = 0; i < ptsx.size(); i++ ) {
               double shift_x = ptsx[i] - ref_x;
               double shift_y = ptsy[i] - ref_y;
