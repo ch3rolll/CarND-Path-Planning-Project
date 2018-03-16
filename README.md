@@ -1,8 +1,6 @@
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program
    
-### Simulator.
-You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases).
 
 ### Goals
 In this project your goal is to safely navigate around a virtual highway with other traffic that is driving +-10 MPH of the 50 MPH speed limit. You will be provided the car's localization and sensor fusion data, there is also a sparse map list of waypoints around the highway. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible, note that other cars will try to change lanes too. The car should avoid hitting other cars at all cost as well as driving inside of the marked road lanes at all times, unless going from one lane to another. The car should be able to make one complete loop around the 6946m highway. Since the car is trying to go 50 MPH, it should take a little over 5 minutes to complete 1 loop. Also the car should not experience total acceleration over 10 m/s^2 and jerk that is greater than 10 m/s^3.
@@ -106,35 +104,50 @@ Note: regardless of the changes you make, your project must be buildable using
 cmake and make!
 
 
-## Call for IDE Profiles Pull Requests
+## Valid Trajectories Requirements:
+- **No Incident**: The car is able to drive at least 4.32 miles without incident
+- **Speed limit.**: The car doesn't drive faster than the speed limit. Also the car isn't driving much slower than speed limit unless obstructed by traffic. The speed limit is set as 49.5.
+- **Max Acceleration and Jerk**:	The car does not exceed a total acceleration of 10 m/s^2 and a jerk of 10 m/s^3.
+- **Collision-free**: The car does not come into contact with any of the other cars on the road.
+- **Stays in its lane**: The car doesn't spend more than a 3 second length out side the lane lanes during changing lanes, and every other time the car stays inside one of the 3 lanes on the right hand side of the road.
+- **Lane Change**: The car is able to smoothly change lanes when it makes sense to do so, such as when behind a slower moving car and an adjacent lane is clear of other traffic.
 
-Help your fellow students!
+## Reflection
+Basically, I followed the walk-through algo, combined with my own decision-making part. The spline.h is also used for generating a smooth curve for car path prediction. The whole algorithm is implemented in main.cpp.
 
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to ensure
-that students don't feel pressured to use one IDE or another.
+### Prediction which lane to go
+This part of code actually deals with the sensor fusion output and predict which lane to go, based on the critiera of safety distance.
 
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
+First of all, I defined three double variables to track the distance from the closest car to ego vehicle for ego lane, left lane and right lane.
 
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
+```cpp
+ double ego_dist = 100;
+ double left_dist = 100;
+ double right_dist = 100;
+```
 
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
+### Lane Change Decision
 
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
+Then, the working principle for detemining which lane to go is like below: 
+- It only considers changing lane if `ego_dist < safe_dist`
+- It compares the value between left and right lane if both exist, and choose the better one to go
 
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
+```cpp
+if ( ego_dist < safe_dist ) { 
+  if ( left_dist > safe_dist && lane > 0 && left_dist > right_dist) {
+    // if there is no car left and there is a left lane.
+    lane--; // Change lane left.
+  } else if ( right_dist > safe_dist  && left_dist < right_dist  && lane != 2 ){
+    // if there is no car right and there is a right lane.
+    lane++; // Change lane right.
+  } 
+}
+```
+### Trajectory Generation
+This part of code generates the trajectory based on the value of `ref_vel`. 
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
-
+There are several steps here:
+1. Use the last two points from the previous trajectory
+2. Predict three future points (30, 60, 90) based on current car position
+3. Speed change by using `speed_diff` and regularization afterwards
+4. Transform to local coordinate system
